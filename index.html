@@ -31,19 +31,16 @@
 	@media only screen and (min-width: 200px) and (max-width: 767px)  {
 		html {background: #222; color: #fff;}
 	}
-* {
-	box-sizing: border-box;
-}
-
-canvas {
-	position: absolute;
-	top: 0; left: 0;
-	opacity: 0.05;
-	z-index: 9999;
-	pointer-events: none;
-	user-select: none;
-}
-
+	* {box-sizing: border-box;}
+	canvas {
+		position: absolute;
+		top: 0; left: 0;
+		opacity: 0.05;
+		z-index: 9999;
+		pointer-events: none;
+		user-select: none;
+	}
+	#content img, #nav a { transition: all 0.3s ease-in-out;}
 </style>
 </head>
 <body>
