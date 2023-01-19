@@ -44,6 +44,7 @@
 		pointer-events: none;
 		user-select: none;
 	}	
+	li, ul, ol {list-style-type: none;}
 	</style>
 </head>
 <body>
@@ -106,6 +107,7 @@ L 459.3 43.2 Z"/>
     <a href="#!about" id="about">about</a>
     <a href="#!media" id="media">media</a>
     <a href="#!shop" id="shop">shop</a>
+    <a href="#!blog" id="shop">blog</a>
   </nav>
 
   <div id="content"></div>
@@ -116,7 +118,7 @@ L 459.3 43.2 Z"/>
   <script>
 // run marked.js
 async function run(here) {
-  let file = await fetch(here)
+  let file = await fetch('content/'+here+".md")
   let text = await file.text()
   document.getElementById('content').innerHTML = marked(text);
 }
@@ -124,22 +126,34 @@ async function run(here) {
 // nav click event
 document.getElementById("nav").addEventListener("click",function(e) { 
     if(e.target && e.target.nodeName == "A") {
-        const docs = "content/"+e.target.id+".md"
-        thispage = docs;
-        run(docs)
-	document.body.className = e.target.id;
+	const docs = e.target.id;
+	thispage = docs;
+	run(docs)
+	history.replaceState(undefined, undefined, "#!"+hash)
+	document.body.id = e.target.id;
 	document.title = 'babaras | '+e.target.id;
     }
 });
 
 
+// blog nav click event
+document.getElementById("content").addEventListener("click",function(e) { 
+    if(e.target && e.target.nodeName == "A") {
+	e.preventDefault();
+	var vvx = e.target.parentNode.id.slice(1, -1)
+	run('blog/'+vvx);
+	history.replaceState(undefined, undefined, "#!blog/"+vvx)
+	document.title = 'babaras | '+e.target.textContent;
+    }
+});
+
 // start <<<<<<<<<<<
 // load page from URL
 if(window.location.hash) {
 	var hash = window.location.hash.substring(2);
-	run('content/'+hash+'.md');
+	run(hash);
 	history.replaceState(undefined, undefined, "#!"+hash)
-	document.title = 'babaras | '+hash;	
+	document.title = 'babaras | '+hash;		
 } else {
 	run('content/home.md');
 }
