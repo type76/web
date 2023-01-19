@@ -106,8 +106,8 @@ L 459.3 43.2 Z"/>
   <nav id="nav">
     <a href="#!home" id="home">home</a>
     <a href="#!about" id="about">about</a>
-    <a href="#!about" id="media">media</a>
-    <a href="#!about" id="shop">shop</a>
+    <a href="#!media" id="media">media</a>
+    <a href="#!shop" id="shop">shop</a>
   </nav>
 
   <div id="content"></div>
@@ -129,8 +129,8 @@ document.getElementById("nav").addEventListener("click",function(e) {
         const docs = "content/"+e.target.id+".md"
         thispage = docs;
         run(docs)
-		document.body.className = e.target.id;
-		document.title = 'babaras | '+e.target.id;
+	document.body.className = e.target.id;
+	document.title = 'babaras | '+e.target.id;
     }
 });
 
