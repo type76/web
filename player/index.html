@@ -1,0 +1,363 @@
+<html>
+<head>
+	<title>cassette tape</title>
+	<style>
+	body { margin: 0; background:#000 url(textures/JWST4.jpg) 0 0 no-repeat; background-size: cover; }
+	canvas { width: 100%; height: 100% }
+	#audiofile {display: none;}
+</style>
+</head>
+<body>
+	<audio id="audiofile" src="jah-jah-me-pray-to.mp3" controls=""></audio>
+
+
+	<script src="https://cdn.jsdelivr.net/npm/three@0.102.0/build/three.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/three@0.102.0/examples/js/controls/OrbitControls.js"></script>
+
+
+	<script>
+	var tapes = [
+		"textures/tape-bg1.png",
+		"textures/tape-bg2.png",
+		"textures/tape-bg3.png",
+		"textures/tape-bg4.png",
+		"textures/tape-bg5.png",
+		"textures/tape-bg6.png",
+		"textures/tape-bg7.png",
+	]
+	var bgtextures = [
+		"textures/JWST4.jpg",
+		"textures/JWST2.jpg",
+		"textures/JWST3.jpg",
+		"textures/JWST9.jpg",
+		"textures/JWST5.jpg",
+		"textures/JWST6.jpg",
+		"textures/JWST1.jpg",
+	]
+	var tapenumber = 0;
+	var scalelerp = 1;
+	var audioPlayer = document.getElementById("audiofile");
+	var playing = false;
+
+	var xvar = 0;
+	var speed = 0;
+	var scene = new THREE.Scene();
+	var camera = new THREE.PerspectiveCamera( 75, window.innerWidth/window.innerHeight, 0.1, 1000 );
+
+	var renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+	renderer.setSize( window.innerWidth, window.innerHeight );
+	document.body.appendChild( renderer.domElement );
+
+	camera.position.z = 9;
+
+	//
+	raycaster = new THREE.Raycaster();
+	mouse = new THREE.Vector2();
+
+	//
+	controls = new THREE.OrbitControls(camera, renderer.domElement);
+	controls.enablePan = false;
+	// controls.enableZoom = false;
+	// groups
+	maingroup = new THREE.Group();
+	maingroup.rotation.x = -Math.PI/2;
+	maingroup.rotation.y = -Math.PI/2;
+	maingroup.rotation.z = Math.PI;
+	maingroup.position.y = -0.5;
+	maingroup.position.z = -0.5;
+	scene.add(maingroup)
+	//
+	leftg = new THREE.Group();
+	leftg.position.set(-0.452,0.469,2.291)
+	maingroup.add(leftg);
+	//
+	rightg = new THREE.Group();
+	rightg.position.set(-0.452,0.469,-2.15)
+	maingroup.add(rightg);
+	//
+	groundgroup = new THREE.Group();
+	scene.add( groundgroup );
+
+
+	var light = new THREE.AmbientLight( 0x666666 ); // soft white light
+	scene.add( light );
+	var pointLight = new THREE.PointLight( 0xffffff, 1.5, 20 );
+	pointLight.position.set( 0, 0.05, 4 );
+	scene.add( pointLight );
+
+
+	// loader type
+	var loader = new THREE.BufferGeometryLoader();
+
+	// tape body
+	loader.load(
+		'tapebody2.json',
+		function ( geometry ) {
+			var texture = new THREE.TextureLoader().load( 'textures/tape-bg1.png' );
+
+			texture.magFilter = THREE.NearestFilter;
+			texture.minFilter = THREE.NearestFilter;
+			var material = new THREE.MeshLambertMaterial( { map: texture,
+				// color:0xec1803,
+				side:THREE.DoubleSide, } );
+			window.cassettetape = new THREE.Mesh( geometry, material );
+			maingroup.add( cassettetape );
+		},
+		function ( xhr ) {
+		},
+		function ( xhr ) {
+			console.log( 'An error happened' );
+		}
+		);
+
+	// gears
+	loader.load(
+		'gear.json',
+		function ( geometry ) {
+			var material = new THREE.MeshLambertMaterial( { 
+				color: 0x555555 } );
+			gear1 = new THREE.Mesh( geometry, material );
+			leftg.add( gear1 );
+	// clone
+	gear2 = gear1.clone();
+	rightg.add(gear2);
+	},
+	function ( xhr ) {
+	},
+	function ( xhr ) {
+		console.log( 'An error happened' );
+	}
+	);
+
+	// reels
+	loader.load(
+		'reel.json',
+		function ( geometry ) {
+			var material = new THREE.MeshLambertMaterial( { 
+				// wireframe:true,
+				color:0x333333 } );
+			reel1 = new THREE.Mesh( geometry, material );
+			
+			leftg.add( reel1 );
+	// clone
+	reel2 = reel1.clone();
+	rightg.add(reel2);
+	},
+	function ( xhr ) {
+	},
+	function ( xhr ) {
+		console.log( 'An error happened' );
+	}
+	);
+
+
+	// buttons
+	makebutton(-2, 'playbtn');
+	makebutton(0, 'stopbtn');
+	makebutton(2, 'rwbtn');
+	makebutton(4, 'ffbtn');
+
+
+	// circlular grid
+	var radius = 10;
+	var radials = 16;
+	var circles = 2;
+	var divisions = 64;
+	var helper = new THREE.PolarGridHelper( radius, radials, circles, divisions );
+	helper.rotation.z = Math.PI;
+	helper.position.y = -1;
+	leftg.add( helper );
+
+
+
+
+	// tape ribbon
+	var geometry = new THREE.PlaneBufferGeometry( 0.4, 9, 1 );
+
+	// transparent texture
+	var ribbontex = new THREE.TextureLoader().load( 'textures/tex2.png' );
+	ribbontex.magFilter = THREE.NearestFilter;
+	ribbontex.minFilter = THREE.LinearMipMapLinearFilter;
+	ribbontex.repeat.set( 1/6, 22.5/6 );
+	ribbontex.wrapS = ribbontex.wrapT = THREE.RepeatWrapping;
+	var cmaterial = new THREE.MeshLambertMaterial( { map:ribbontex } );
+	ribbon = new THREE.Mesh( geometry, cmaterial );
+	ribbon.rotation.set(-Math.PI/2,Math.PI/2,0)
+	ribbon.position.set(2.9,0.4,0);
+	maingroup.add( ribbon );
+
+	
+	// pencil
+	loader.load(
+		'pencil.json',
+		function ( geometry ) {
+			var texture = new THREE.TextureLoader().load( 'textures/penciltexture.png' );
+
+			texture.magFilter = THREE.NearestFilter;
+			texture.minFilter = THREE.NearestFilter;
+			var material = new THREE.MeshLambertMaterial( { map: texture,
+			} );
+			var pencil = new THREE.Mesh( geometry, material );
+			pencil.scale.set(0.37,0.37,7);
+			pencil.position.set(0,-6,0);
+			pencil.rotation.set(-Math.PI/2,0,0);
+			leftg.add( pencil );
+		},
+		function ( xhr ) {
+		},
+		function ( xhr ) {
+			console.log( 'An error happened' );
+		}
+		);
+
+
+	// shadow
+	var shgeometry = new THREE.PlaneBufferGeometry( 13, 13 );
+	var shmaterial = new THREE.MeshBasicMaterial( { 
+		map: new THREE.TextureLoader().load( 'textures/shadow.png' ),
+		opacity:0.5, transparent:true
+		 } );
+	shadow = new THREE.Mesh( shgeometry, shmaterial );
+	shadow.rotation.set(-Math.PI/2,0,Math.PI/2)
+	shadow.position.set(0,-1,0);
+	maingroup.add( shadow );
+
+
+	// handle window resize
+	window.addEventListener('resize', function(){
+		camera.aspect = window.innerWidth / window.innerHeight;
+		camera.updateProjectionMatrix();
+		camera.updateProjectionMatrix();
+		renderer.setSize( window.innerWidth, window.innerHeight );
+	}, false)
+
+	// head
+	var geometry = new THREE.BoxGeometry( 0.2, 0.5, 0.5 );
+	var material = new THREE.MeshLambertMaterial( { color: 0xff0000 } );
+	var cube = new THREE.Mesh( geometry, material );
+	cube.position.set(2.75,0.4,0)
+	maingroup.add( cube );
+
+
+
+
+	// move stuff
+	function animation() {
+		leftg.rotation.y -= speed;
+		rightg.rotation.y -= speed;
+		ribbontex.offset.y += speed;
+
+		// animation lerp
+		xvar += (scalelerp - xvar)*0.2;
+		maingroup.scale.set(xvar,xvar,xvar);
+	}
+
+
+	//
+	function makebutton(num, btname){
+		// texture
+		var bgtexture = new THREE.TextureLoader().load( 'textures/'+btname+'.png' );  
+
+			//plane geometry
+			let plgeometry = new THREE.PlaneBufferGeometry( 1.8, 1.8, 1 );
+
+		//plane material
+		let plmaterial = new THREE.MeshBasicMaterial( { 
+			map:bgtexture, alphaTest:0.5
+		} );
+
+		//plane object3D
+		let plane = new THREE.Mesh( plgeometry, plmaterial );
+		plane.name = btname;
+		plane.position.set(num,-5,0);
+		groundgroup.add( plane );
+
+	}
+
+	
+	function choosetune(argument) {
+		tapenumber = tapenumber+argument;
+		if (tapenumber > tapes.length-1) {tapenumber = 0;}
+		if (tapenumber < 0) {tapenumber = tapes.length-1;}
+
+		cassettetape.material.map = new THREE.TextureLoader().load( tapes[tapenumber] );
+		cassettetape.material.map.update = true;
+		bounce();
+		document.body.style.backgroundImage = "url("+bgtextures[tapenumber]+")"
+	}
+
+	function bounce(argument) {
+		scalelerp = 0.8;
+		setTimeout(function() {
+			scalelerp = 1;
+		}, 20);
+	}
+
+	// mouse up event
+	window.addEventListener('mouseup', e => {
+		mouse.x = ( e.pageX / window.innerWidth ) * 2 - 1;
+		mouse.y = - ( e.pageY / window.innerHeight ) * 2 + 1;
+   		raycaster.setFromCamera( mouse, camera );
+
+	  // raycast
+	  var intersects = raycaster.intersectObject( groundgroup, true );
+
+	  if ( intersects.length > 0 ) {
+
+	  	if (intersects[0].object.name == 'playbtn') {
+	  		speed = 0.01;
+	  		playing = true;
+	  		audioPlayer.play();
+	  		bouncebtn(intersects[0].object);
+	  	}
+	  	if (intersects[0].object.name == 'stopbtn') {
+	  		speed = 0;
+	  		playing = false;
+	  		audioPlayer.pause();
+	  		bouncebtn(intersects[0].object);
+	  	}
+	  	if (intersects[0].object.name == 'rwbtn') {
+	  		// speed = -0.1;
+	  		speed = 0;
+	  		playing = false;
+	  		audioPlayer.pause();     
+	  		bouncebtn(intersects[0].object);
+	  		choosetune(-1)
+	  	}
+	  	if (intersects[0].object.name == 'ffbtn') {
+	  		// speed = 0.1;
+	  		speed = 0;
+	  		playing = false;
+	  		audioPlayer.pause();
+	  		bouncebtn(intersects[0].object);
+	  		choosetune(+1)
+	  	}
+
+	  }
+
+
+	});
+
+
+	function bouncebtn(argument) {
+		argument.position.z = -0.2;
+		setTimeout(function() {
+			argument.position.z = 0;
+		}, 20);
+	}
+
+	//
+	var animate = function () {
+		requestAnimationFrame( animate );
+		renderer.render( scene, camera );
+		animation()
+	};
+
+
+	// start
+	setTimeout(function() {
+		animate();
+	}, 200);
+</script>
+</body>
+</html>
