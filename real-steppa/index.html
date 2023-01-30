@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="en" >
+<head>
+  <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+  <meta charset="UTF-8">
+  <title>real steppa</title>
+  <style>
+  body{
+    user-select:none;
+    padding: 0;
+    margin: 0;
+    background: #000;
+    color: #fff;
+    overflow: hidden;
+    font-family: monospace;
+    height: 100vh;
+    position: relative;
+  }
+
+  #hud {position: fixed; top: 0; padding: 12px;}
+  #bumpcanvas {transform: scale(0.5); position: absolute; top: 64px; left: -128px; display: block; width: 512px; height: 256px;}
+  #colcanvas {transform: scale(0.5); position: absolute; top: -64px; left: -128px; display: block; width: 512px; height: 256px;}
+  #theater {padding: 0px; position: absolute; top:0;}
+
+  .vertical-center {
+    margin: 0;
+    position: absolute;
+    top: 50%;
+    right: 0;
+    -ms-transform: translateY(-50%);
+    transform: translateY(-50%);
+  }
+  .vertical-center button {padding: 12px; margin: 12px; 
+    cursor: pointer; display: block;}
+
+    canvas { width: 100%; height: 100% 
+      image-rendering: optimizeSpeed;
+      image-rendering: -moz-crisp-edges;
+      image-rendering: -o-crisp-edges;
+      image-rendering: -webkit-optimize-contrast;
+      image-rendering: pixelated;
+      image-rendering: optimize-contrast;
+      -ms-interpolation-mode: nearest-neighbor;
+    }
+  audio, #theatre {width: 100vw; display: none;}
+  #hud button {
+    background: transparent;
+    color: #fff; border:none; outline: none;
+    cursor: pointer; display: block;
+    width: 40px; height: 40px;
+    opacity: 0.3;
+    transition: all 0.3s ease-in-out;
+    float: right;
+    z-index: 2; position: relative;
+  }
+  
+  .playing #hud button#playBtn,
+  .paused #hud button#pauseBtn {
+    display: none;
+  }
+
+  #hud button:hover {
+    opacity: 1;
+  }
+
+  #hud {
+    display: block;
+    margin: 0;
+    padding: 12px;
+    position: absolute;
+    z-index: 2;
+  }
+  #btntxt {width: 40px; text-align: center; line-height: 1.6em; 
+    opacity: 0.3; z-index: 1; position: relative;}
+</style>
+</head>
+<body tabindex="1" class="paused">
+
+
+<div id="hud">
+    <button id="playBtn" type="button" onclick="playme()">
+      <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" preserveAspectRatio="none" viewBox="0 0 100 100">
+        <defs>
+          <path id="a" fill="#fff" d="M19.55 14.85v70.3L80.5 50 19.55 14.85Z"/></path>
+        </defs>
+        <use xlink:href="#a"/>
+      </svg>
+    </button>
+
+    <button id="pauseBtn" type="button" onclick="aud_fade_out()" >
+      <svg xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" viewBox="0 0 100 100">
+        <path fill="#fff" d="M39.4778 17.0371H21.0593v66h18.4185zm34.5349 0H55.594v66h18.4186z"/></path>
+      </svg>
+    </button>
+</div>
+
+  <div id="theater">
+    <audio id="audioPlayer" src="assets/realsteppa.mp3"
+    controls></audio>
+  </div>
+
+  <script src='js/three.min.js'></script>
+  <script src='js/OrbitControls.js'></script>
+  <script src='js/inflate.min.js'></script>
+  <script src='js/FBXLoader.js'></script>
+  <script src='js/perlin.js'></script>
+
+  <script>
+// player
+player = {
+  width:256,
+  size:8,
+  count:32,
+  fps:8,
+};
+
+// audio player
+var audioPlayer = document.getElementById("audioPlayer");
+var frames = [];
+
+
+// play event
+audioPlayer.addEventListener('pause', () => {
+  action = actions[0];
+  mixer.stopAllAction();
+  action.reset();
+  action.fadeIn(0.5);
+  action.play();
+  //
+  thisaction = list[0];   
+});
+
+// pause event
+audioPlayer.addEventListener('play', () => {
+  action = actions[1];
+  mixer.stopAllAction();
+  action.reset();
+  action.fadeIn(0.5);
+  action.play();
+  //
+  thisaction = list[1];   
+});
+
+
+
+
+// spacebar controls
+window.addEventListener('keyup', event => {
+  if (event.code === 'Space') {
+    if (audioPlayer.duration > 0 && !audioPlayer.paused) {
+      audioPlayer.pause();
+    } else {
+      audioPlayer.play();
+    }
+  }
+});
+
+
+
+// subtitles
+var subs = [
+{ "start": "8", "text": "    naaa na na na  na na na  naaa  naaaaaaaaaaaaaaaaaaaaaa" },
+{ "start": "15", "text": "       naaa  naaa  naaa naa naa naaa  naaaa" },
+{ "start": "23", "text": "   naaa na na na  na na naaa  naaa  naaaaaaaaaaaaaaaaaaa" },
+{ "start": "30", "text": "      naaa  na na na naaa naa naa  naaa  naaaa" },
+{ "start": "37", "text": "reeel" },
+{ "start": "38", "text": "steppaaa" },
+{ "start": "39", "text": "coos deboda" },
+{ "start": "40", "text": "of racis" },
+{ "start": "41", "text": "caaases aan " },
+{ "start": "42", "text": "  creed" },
+{ "start": "43", "text": "rasta man a" },
+{ "start": "44", "text": "reeel" },
+{ "start": "45", "text": "skippaaa" },
+{ "start": "46", "text": "loo  bringaa" },
+{ "start": "48", "text": "anyway we havi" },
+{ "start": "50", "text": "paan nuf seeee" },  // chorus
+{ "start": "51", "text": "rassa man a" },
+{ "start": "52", "text": "  reel steppa" },
+{ "start": "53", "text": "  cross de baada" },
+{ "start": "55", "text": "of racist" },
+{ "start": "56", "text": "caaases aan " },
+{ "start": "57", "text": "  creeds" },
+{ "start": "58", "text": "rasta man a reeeel" },
+{ "start": "60", "text": "skippaaa" },
+{ "start": "61", "text": " loo bigaa " },
+{ "start": "62", "text": "  anyway weav to plaan" },
+{ "start": "64", "text": "nuf seeeeeeeeeeeeds" },  // chorus
+{ "start": "67", "text": "ja luv an hae" },
+{ "start": "68", "text": "on i bat feeeeeee" },
+{ "start": "70", "text": " hate coud neva win" },
+{ "start": "72", "text": "no neva" },
+{ "start": "73", "text": "neva" },
+{ "start": "74", "text": " selassi aay luv" },
+{ "start": "76", "text": "evaa evaa reeeel" },
+{ "start": "78", "text": "ja ja luv mek" },
+{ "start": "79", "text": "rasta man" },
+{ "start": "80", "text": "feel real" },
+{ "start": "81", "text": "rasta man a" },
+{ "start": "82", "text": "an in yoo meditaton" },
+{ "start": "85", "text": "mek sure" },
+{ "start": "86", "text": "your meditation right right" },
+{ "start": "88", "text": "rasta man from creation" },
+{ "start": "92", "text": "come ya so fi shine love light" },
+{ "start": "95", "text": "mi se, dem cant hold me down" },
+{ "start": "98", "text": "word an mi sound" },
+{ "start": "100", "text": "wicked dem try fi test we" },
+{ "start": "101", "text": "but dem get trow down" },
+{ "start": "104", "text": "try dem a try" },
+{ "start": "105", "text": "put we in da background" },
+{ "start": "107", "text": "full time we chat dem down" },
+{ "start": "111", "text": "reeel steppa" },
+{ "start": "112", "text": "steppaaa" },
+{ "start": "113", "text": "cross de boda" },
+{ "start": "114", "text": "of racist" },
+{ "start": "116", "text": "caaases aan " },
+{ "start": "117", "text": "  creeds" },
+{ "start": "118", "text": "rasta man a" },
+{ "start": "119", "text": "reeel" },
+{ "start": "120", "text": "skippaaa" },
+{ "start": "121", "text": "  love  bringaa " },
+{ "start": "122", "text": "anyway we hav too " },
+{ "start": "124", "text": "plant nuff seee " }, // chorus
+{ "start": "125", "text": "rasta man a" },
+{ "start": "126", "text": "  reel steppa" },
+{ "start": "127", "text": "  cross de baada" },
+{ "start": "130", "text": "of racist" },
+{ "start": "131", "text": "caaases aan " },
+{ "start": "132", "text": "  creeds" },
+{ "start": "133", "text": "rasta man a reeeel" },
+{ "start": "135", "text": "skippaaa" },
+{ "start": "136", "text": " loo bigaa " },
+{ "start": "137", "text": "  anywaa we hav too " },
+{ "start": "140", "text": "plaant nuff seeeeeeeeeds" }, // 140
+{ "start": "141", "text": "rasta man a walk de talk dat mi talk" },
+{ "start": "144", "text": "babylon a step just like harbour shark" },
+{ "start": "147", "text": "rasta man a shine nuff light inna de dark" },
+{ "start": "151", "text": "anyting rasta chant come straight from de heart" },
+{ "start": "156", "text": "rasta get stronger" },
+{ "start": "159", "text": "inna every little crevice and corner" },
+{ "start": "162", "text": "cause sellassie I" },
+{ "start": "163", "text": "him a de faada" },
+{ "start": "166", "text": "fundemental inspirataaaaa" },
+{ "start": "170", "text": "rasta man a" },
+{ "start": "171", "text": "  reel steppa" },
+{ "start": "173", "text": "  cross de baada" },
+{ "start": "174", "text": "of racist" },
+{ "start": "175", "text": "caaases aan " },
+{ "start": "176", "text": "  creeds" },
+{ "start": "177", "text": "rasta man a reeeel" },
+{ "start": "179", "text": "skippaaa" },
+{ "start": "180", "text": " loo bigaa " },
+{ "start": "182", "text": "  anywaa we hav too " },
+{ "start": "183", "text": "plaant nuff seeeeeeeeeds" }, // 184
+{ "start": "185", "text": "rasta man a" },
+{ "start": "186", "text": "  reel steppa" },
+{ "start": "188", "text": "  cross de baada" },
+{ "start": "189", "text": "of racist" },
+{ "start": "190", "text": "caaases aan " },
+{ "start": "191", "text": "  creeds" }, // 192
+{ "start": "192", "text": "rasta man a reeeel" },
+{ "start": "194", "text": "skippaaa" },
+{ "start": "195", "text": " loo bigaa " },
+{ "start": "196", "text": "  anywaa we hav too " },
+{ "start": "198", "text": "plaant nuff seeeeeeeeeds" }, // 200
+];
+
+
+
+// image array
+var syncData = [
+{"mouthshape":"A", "col":"assets/lioncol.png", "bmp":"assets/lionbmp.png", "viz":true},
+{"mouthshape":"M", "col":"assets/lioncol_2.png", "bmp":"assets/lionbmp_2.png", "viz":false},
+{"mouthshape":"O", "col":"assets/lioncol_3.png", "bmp":"assets/lionbmp_3.png", "viz":false},
+{"mouthshape":"E", "col":"assets/lioncol_4.png", "bmp":"assets/lionbmp_4.png", "viz":true}
+];
+
+
+
+
+// globals
+const raingroup = [];
+const cargroup = [];
+const cimages = [];
+const bimages = [];
+var imageCount = 0;
+var paused = false;
+var thisframe = 0;
+var oldframe = 0;
+var currenttime = 0;
+var oldvalue = 0;
+var textcheck = 'x';
+var speechspeed = 100;
+var thisaction = 'null';
+
+// overlay
+const overlayimage = new Image();
+overlayimage.src = "assets/lionoverlay.png";
+
+  //
+  syncData.forEach(function(element, index){
+    const colimage = new Image();
+    colimage.src = element.col;
+    colimage.onload = ()=>{ 
+      imageCount += 1;
+      if(imageCount === syncData.length){ 
+        coltx.drawImage(cimages[1], 0, 0, 512, 256);
+        coltx.drawImage(overlayimage, 0, 0, 512, 256);
+      }
+    }
+       //
+       const bmpimage = new Image();
+       bmpimage.src = element.bmp;
+       bmpimage.onload = ()=>{ 
+         if(imageCount === syncData.length){ 
+          bumptx.drawImage(bimages[1], 0, 0, 512, 256);
+        }
+      }     
+
+      cimages.push(colimage); 
+      bimages.push(bmpimage); 
+ //      console.log(colimage, bmpimage)
+});
+
+
+
+  // face colour layer
+  var bumpcanvas = document.createElement('canvas');
+  bumptx = bumpcanvas.getContext('2d');
+  bumpcanvas.id = "bumpcanvas";
+  bumpcanvas.width = 512;
+  bumpcanvas.height = 256;
+  // document.body.appendChild(bumpcanvas);
+
+  var colcanvas = document.createElement('canvas');
+  coltx = colcanvas.getContext('2d');
+  colcanvas.id = "colcanvas";
+  colcanvas.width = 512;
+  colcanvas.height = 256;
+  //document.body.appendChild(colcanvas);
+
+
+//
+var scene, clock, camera, renderer, clock, mixer, actions, spine;
+var anims = ["neutral", "strut"];
+var list = ["neutral", "strut"];
+var target = new THREE.Vector3();
+var anim = null;
+var speed = 0;
+var paused = false;
+var headfinished = false;
+var index = 0;
+var walking = false;
+var bg3D = [];
+var geowidth = 15;
+
+// start
+init();
+
+
+function init(){  
+  scene = new THREE.Scene();
+  clock = new THREE.Clock();
+
+  // render
+  renderer = new THREE.WebGLRenderer({ 
+    // antialias: true,
+     // alpha:true
+  });
+
+  renderer.setSize( window.innerWidth, window.innerHeight );
+  renderer.outputEncoding = THREE.sRGBEncoding;
+  renderer.shadowMap.enabled = true;
+  document.body.appendChild( renderer.domElement );
+  
+
+  // 
+  camerapivot = new THREE.Group();
+  scene.add(camerapivot)
+
+  // camera
+  camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 0.1, 1000 );
+  camera.position.set(5, 1.55, 0);
+  camerapivot.add(camera)
+
+  // fog
+  scene.fog = new THREE.FogExp2(0x000000, 0.05);
+
+  // control
+  window.controls = new THREE.OrbitControls( camera, renderer.domElement );
+  // controls.maxDistance = 5;
+  // controls.minDistance = 0.5; 
+  // controls.maxPolarAngle = Math.PI * 0.55;
+  // controls.maxAzimuthAngle = Math.PI * 0.47;
+  // controls.minAzimuthAngle = -Math.PI * 0.47;
+  controls.target.set( 0, 1.55, 0 );
+  controls.update();
+
+  // lights
+  const ambient = new THREE.HemisphereLight(0xffffff, 0x333333, 0.8);
+  scene.add(ambient);
+
+  // top shadow light
+  const dirLight = new THREE.DirectionalLight( 0xffffff, 0.8, 0.1  );
+  dirLight.position.set( -0.1, 10, -0.1 );
+  dirLight.castShadow = true;
+  dirLight.shadow.mapSize.width = 256;
+  dirLight.shadow.mapSize.height = 256;
+  dirLight.shadow.camera.top = 5;
+  dirLight.shadow.camera.bottom = -5;
+  dirLight.shadow.camera.left = -5;
+  dirLight.shadow.camera.right = 5;
+  dirLight.shadow.camera.near = 1;
+  dirLight.shadow.camera.far = 26;
+  dirLight.shadow.radius = 3;
+  dirLight.lookAt(0,0,0)
+  scene.add( dirLight );
+
+
+  // BG layers
+  // addBGlayer ('bg-5', -4)
+  // addBGlayer ('bg-2', -5)
+  // addBGlayer ('bg-1', -6)
+  // addBGlayer ('forest1', -4)
+  // addBGlayer ('forest2', -5)
+
+
+  // loader
+  const loader = new THREE.FBXLoader();
+  
+  loader.load('assets/neutral.fbx', object => {
+    mixer = new THREE.AnimationMixer(object);
+    actions = [];
+    const action = mixer.clipAction(object.animations[0]);
+    action.play();
+    const map = new THREE.TextureLoader()
+    .load('assets/bodytexture.png');
+    map.magFilter = THREE.NearestFilter;
+    map.minFilter = THREE.NearestFilter;
+
+
+    object.traverse( child => {
+      if (child.isMesh){
+        child.material.map = map;
+        child.castShadow = true;
+        child.recieveShadow = true;
+      }
+    });
+
+
+    scene.add(object);
+    object.rotation.y = Math.PI/2;
+    object.position.y = -2;
+    object.scale.set(2,2,2)
+
+    loadAnimation(loader);
+    
+
+    // lion head
+    neckbone = scene.getObjectByName( 'mixamorigHead' );
+    makehead(neckbone);  
+  });
+  
+  window.addEventListener( 'resize', resize, false);
+  
+} // end init
+
+
+// add BG layer
+function addBGlayer(filename, posz) {
+  bgtexture = new THREE.TextureLoader().load( 'assets/'+filename+'.png' );
+  bgtexture.magFilter = THREE.NearestFilter;
+  bgtexture.minFilter = THREE.NearestFilter;
+  bgtexture.repeat.x = 1 / 1;
+  bgtexture.wrapS = THREE.RepeatWrapping;
+  bgtexture.wrapT = THREE.RepeatWrapping;
+
+  bgmaterial = new THREE.MeshLambertMaterial({
+    map: bgtexture
+    ,side:THREE.DoubleSide
+    ,transparent:true
+  });  
+
+  bggeometry = new THREE.PlaneGeometry(60, 7.5);
+  bg = new THREE.Mesh(bggeometry, bgmaterial);
+  bg.renderOrder = 1;
+  bg.position.z = posz;
+  bg.position.y = 3.75;
+  bg.castShadow = true;
+  bg.name = filename;
+
+  scene.add(bg);
+  bgMeshList.push(bg);
+}
+
+
+
+function playAction(index){
+  const action = actions[index];
+  mixer.stopAllAction();
+  action.reset();
+  action.fadeIn(0.5);
+  action.play();
+  //
+  thisaction = list[index]; 
+  // console.log(index, actions[index])
+}
+
+
+// create lion head
+function makehead(obj) {
+  // lion head
+  head = new THREE.Group();
+  head.scale.set(0.004,0.004,0.004)
+  head.rotation.y = -Math.PI/2;
+  head.rotation.z = -Math.PI/10;
+  head.position.y = 0.08;
+  head.position.z = 0.05;
+
+  // add it to model
+  obj.add( head );
+
+  
+  teeth = new THREE.Group();
+  head.add( teeth );
+  teeth.visible = false;      
+
+  //
+  makelionhead()
+}
+
+
+
+
+ // load anim util
+ function loadAnimation(loader){
+  anim = anims.shift();
+  loader.load(`assets/${anim}.fbx`, object => {
+    const action = mixer.clipAction(object.animations[0]);
+    actions.push(action);
+    if (anims.length>0){
+      loadAnimation(loader);
+    }else{
+      update();
+      console.log('all models loaded')
+    }
+  })
+}
+
+
+// blink eyes
+function blink(){
+  imaterial.map = eyeblink;
+  imaterial.map.needsUpdate = true;
+
+  setTimeout(function() {
+    imaterial.map = eyeopen;
+    imaterial.map.needsUpdate = true;
+  }, 60);
+}
+
+
+
+// resize
+function resize(){
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize( window.innerWidth, window.innerHeight );
+}
+
+
+// environment
+function createworld(){
+
+  // // ground plane
+  var geometry = new THREE.PlaneGeometry( geowidth*6, geowidth*6, 30, 30);
+  groundtex = new THREE.TextureLoader().load( 'assets/ground2.png' );
+  groundtex.magFilter = THREE.NearestFilter;
+  groundtex.minFilter = THREE.NearestFilter;
+  groundtex.repeat.set( 4, 4 );
+  groundtex.wrapS = groundtex.wrapT = THREE.RepeatWrapping;
+  window.cmaterial = new THREE.MeshStandardMaterial( { 
+    // wireframe:true,
+    map:groundtex,
+    transparent:true,
+    alpha:true,
+    // opacity:0.2,
+    side: THREE.DoubleSide,
+    displacementMap: groundtex,
+    displacementScale: 2,    
+    // // alphaTest:0.1
+  } );
+  ground = new THREE.Mesh( geometry, cmaterial );
+  ground.rotation.set(-Math.PI/2,0,0);         
+  ground.position.y = -3.9;
+  ground.castShadow = true;
+  ground.receiveShadow = true;
+  // scene.add( ground );
+
+  // // ground-overlay
+  // var dmaterial = new THREE.MeshLambertMaterial( { 
+  // color: 0x000000,
+  // map:new THREE.TextureLoader().load( 'assets/dirt.png' ),
+  // transparent:true
+  // } );
+  // dirt = new THREE.Mesh( geometry, dmaterial );
+  // dirt.rotation.set(-Math.PI/2,0,0);         
+  // dirt.position.set(0,0.01,0);         
+  // dirt.receiveShadow = true;
+  // scene.add( dirt );
+
+
+
+
+
+  // skybox sphere
+  const sgeometry = new THREE.SphereGeometry( 25, 60, 30 );
+  const smaterial = new THREE.MeshBasicMaterial( { 
+    map:new THREE.TextureLoader().load( 'assets/stars3.png' )
+    ,side:THREE.BackSide
+    // ,transparent:true
+    // ,alphaTest:0.1
+  } );
+  smaterial.map.magFilter = THREE.NearestFilter;
+  smaterial.map.minFilter = THREE.NearestFilter;
+  window.sphere = new THREE.Mesh( sgeometry, smaterial );
+  // sphere.position.z = -4;
+  scene.add( sphere );
+
+}
+
+
+// stop on leave focus
+document.addEventListener("visibilitychange", function() {
+  document.title = document.hidden ? "real" : "real steppa";
+
+  if (document.visibilityState === 'visible') {
+    pause = false;
+  } else {
+    pause = true;
+  }
+
+});
+
+
+
+// make text object
+var createText = (function() {
+  return function(argument) {
+    // only do if the text isn't textcheck
+    if (textcheck != text) {
+    // set textcheck var 
+    textcheck = text;
+
+    // mouth shapes
+    lipz = [];
+    lips(text)
+
+    // html subtitles     
+    // document.getElementById('subtitles').innerHTML = text;
+
+  }// txtchk if
+};
+})();
+
+
+// talkling
+function lips(ee) {
+  for (var i = 0, len = ee.length; i < len; i++) {
+    if (ee[i] == 'a') { lipz.push("a");}
+    if (ee[i] == 'e') { lipz.push("e");}
+    if (ee[i] == 'i') { lipz.push("i");}
+    if (ee[i] == 'o') { lipz.push("o");}
+    if (ee[i] == 'u') { lipz.push("o");}
+    if (ee[i] == 'q') { lipz.push("o");}
+    if (ee[i] == 'w') { lipz.push("o");}
+    if (ee[i] == 'r') { lipz.push("w");}
+    if (ee[i] == 't') { lipz.push("t");}
+    if (ee[i] == 'g') { lipz.push("e");}
+    if (ee[i] == 'h') { lipz.push("i");}
+    if (ee[i] == 'j') { lipz.push("e");}
+    if (ee[i] == 'x') { lipz.push("i");}
+    if (ee[i] == 'y') { lipz.push("i");}
+    if (ee[i] == 'd') { lipz.push("t");}
+    if (ee[i] == 'k') { lipz.push("t");}
+    if (ee[i] == 's') { lipz.push("t");}
+    if (ee[i] == 'c') { lipz.push("t");}
+    if (ee[i] == 'z') { lipz.push("t");}
+    if (ee[i] == 'm') { lipz.push("m");}
+    if (ee[i] == 'b') { lipz.push("m");}
+    if (ee[i] == 'p') { lipz.push("m");}
+    if (ee[i] == 'l') { lipz.push("l");}
+    if (ee[i] == 'n') { lipz.push("e");}
+    if (ee[i] == 'f') { lipz.push("m");}
+    if (ee[i] == 'v') { lipz.push("t");}
+    if (ee[i] == ' ') { lipz.push("1");}
+    if (ee[i] == '.') { lipz.push("0");}
+    if (ee[i] == ',') { lipz.push("0");}
+  };
+// console.log(lipz);
+lipz.push("0");
+lipspk(lipz);
+}
+
+// mouthshape positions
+function lipspk(lipz) {
+  for (var i = 0; i < lipz.length; i++) {
+// for each with pause
+(function (i) {
+  setTimeout(function () {
+    if (lipz[i] == 'a') { playframe(0) }
+    if (lipz[i] == 'e') { playframe(3) }
+    if (lipz[i] == 'i') { playframe(3) }
+    if (lipz[i] == 'o') { playframe(2) }
+    if (lipz[i] == 't') { playframe(3) }
+    if (lipz[i] == 'm') { playframe(1) }
+    if (lipz[i] == 'l') { playframe(0) }
+    if (lipz[i] == '1') { playframe(1) }
+    if (lipz[i] == '0') { playframe(1) }
+  }, speechspeed * i);
+})(i);
+};
+}
+
+// shapes
+// A:0
+// M:1
+// O:2
+// E:3
+
+// show lips at current frame
+function playframe(framenum){
+  teeth.visible = syncData[framenum].viz;      
+  coltx.drawImage(cimages[framenum], 0, 0, 512, 256);
+  coltx.drawImage(overlayimage, 0, 0, 512, 256);
+  bumptx.drawImage(bimages[framenum], 0, 0, 512, 256);
+  face.material.map.needsUpdate = true;
+  face.material.displacementMap.needsUpdate = true;
+}
+
+</script>
+
+<script  src="js/head3.js"></script>
+
+<script>
+
+// the big render loop
+function update(){
+  // if (paused) {return}
+
+  // blink
+  if (typeof imaterial != "undefined") {
+    if ( Math.random() > 0.995) { blink();}
+  }
+
+  // body animations
+  if (mixer) {
+    const dt = clock.getDelta();
+    mixer.update(dt);
+  }
+
+  // create text and lip sync
+  subs.forEach(function(element, index){
+    if( currenttime == element.start && !audioPlayer.paused){
+      text = element.text;
+      createText();
+      // document.getElementById('subtitles').innerHTML = text;
+      text = '';      
+    }
+  });
+
+  // show time
+  currenttime = Math.floor(audioPlayer.currentTime);
+  // document.getElementById("timecode").innerHTML = currenttime;
+
+  if (thisaction == 'strut' ){
+    // set speed
+    speed += (0.0002-speed)*0.2;
+    
+    
+    // // ground
+    // cmaterial.map.offset.x += speed*3.5;
+    // cmaterial.map.offset.x += speed*2;
+    // cmaterial.displacementMap.offset.x += speed*2;
+    // cmaterial.needsUpdate = true;
+
+    // bg
+    sphere.rotation.y += speed*4;
+
+
+    //
+    camerapivot.rotation.y += 0.002;
+    camerapivot.rotation.z += 0.002;
+    camera.lookAt(0,1.55,0);
+
+  } else {
+    speed += (0-speed)*0.2;
+  }
+
+    // hair
+    updatethis(hair)
+
+
+  // RAF
+  requestAnimationFrame( update );
+  renderer.render( scene, camera );
+  // console.log(camera.position)
+} // loop
+
+
+//
+
+// play/pause
+var playing = false;
+var paused = true;
+var fadeTimer = false;
+
+function playme() {
+  if (document.body.classList == 'playing') {return}
+  
+  clearTimeout(fadeTimer);
+  var bgAudio = document.getElementById("audioPlayer");
+  bgAudio.volume = 0;
+  bgAudio.play();
+  aud_fade_in();
+  document.body.classList = 'playing';
+
+  playing = true;
+  paused = false;
+}
+
+
+  var aud_fade_in = function() {
+    clearTimeout(fadeTimer);
+    var bgAudio = document.getElementById("audioPlayer");
+    if (bgAudio.volume < 0.994) {
+      bgAudio.volume += 0.005;
+      fadeTimer = setTimeout(aud_fade_in,10);
+    } else {
+      bgAudio.volume = 1;
+    }
+  };
+    var aud_fade_out = function() {
+    clearTimeout(fadeTimer);
+    var bgAudio = document.getElementById("audioPlayer");
+    if (bgAudio.volume > 0.005) {
+      bgAudio.volume -= 0.005;
+      fadeTimer = setTimeout(aud_fade_out,5);
+    } else {
+      bgAudio.volume = 0;
+      bgAudio.pause();
+    }
+    playing = false;
+    paused = true;
+    document.body.classList = 'paused';
+    document.body.style.background = 'black';
+  };
+
+// START <<<<<<<<<<<
+function startup() {
+  createworld()
+  update()
+
+  // update face anim  
+  setTimeout(function() {
+    if (typeof face != "undefined") {
+      playframe(1)
+    }
+  }, 6);
+}
+
+</script>
+</body>
+</html>
