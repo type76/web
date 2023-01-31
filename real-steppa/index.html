@@ -383,21 +383,15 @@ function init(){
   camera.position.set(5, 1.55, 0);
   camerapivot.add(camera)
 
-  // fog
-  scene.fog = new THREE.FogExp2(0x000000, 0.05);
-
   // control
   window.controls = new THREE.OrbitControls( camera, renderer.domElement );
-  // controls.maxDistance = 5;
-  // controls.minDistance = 0.5; 
-  // controls.maxPolarAngle = Math.PI * 0.55;
-  // controls.maxAzimuthAngle = Math.PI * 0.47;
-  // controls.minAzimuthAngle = -Math.PI * 0.47;
+  controls.maxDistance = 20;
+  controls.minDistance = 2; 
   controls.target.set( 0, 1.55, 0 );
   controls.update();
 
   // lights
-  const ambient = new THREE.HemisphereLight(0xffffff, 0x333333, 0.8);
+  const ambient = new THREE.HemisphereLight(0xffffff, 0x333333, 1);
   scene.add(ambient);
 
   // top shadow light
@@ -572,51 +566,10 @@ function resize(){
 // environment
 function createworld(){
 
-  // // ground plane
-  var geometry = new THREE.PlaneGeometry( geowidth*6, geowidth*6, 30, 30);
-  groundtex = new THREE.TextureLoader().load( 'assets/ground2.png' );
-  groundtex.magFilter = THREE.NearestFilter;
-  groundtex.minFilter = THREE.NearestFilter;
-  groundtex.repeat.set( 4, 4 );
-  groundtex.wrapS = groundtex.wrapT = THREE.RepeatWrapping;
-  window.cmaterial = new THREE.MeshStandardMaterial( { 
-    // wireframe:true,
-    map:groundtex,
-    transparent:true,
-    alpha:true,
-    // opacity:0.2,
-    side: THREE.DoubleSide,
-    displacementMap: groundtex,
-    displacementScale: 2,    
-    // // alphaTest:0.1
-  } );
-  ground = new THREE.Mesh( geometry, cmaterial );
-  ground.rotation.set(-Math.PI/2,0,0);         
-  ground.position.y = -3.9;
-  ground.castShadow = true;
-  ground.receiveShadow = true;
-  // scene.add( ground );
-
-  // // ground-overlay
-  // var dmaterial = new THREE.MeshLambertMaterial( { 
-  // color: 0x000000,
-  // map:new THREE.TextureLoader().load( 'assets/dirt.png' ),
-  // transparent:true
-  // } );
-  // dirt = new THREE.Mesh( geometry, dmaterial );
-  // dirt.rotation.set(-Math.PI/2,0,0);         
-  // dirt.position.set(0,0.01,0);         
-  // dirt.receiveShadow = true;
-  // scene.add( dirt );
-
-
-
-
-
   // skybox sphere
   const sgeometry = new THREE.SphereGeometry( 25, 60, 30 );
   const smaterial = new THREE.MeshBasicMaterial( { 
-    map:new THREE.TextureLoader().load( 'assets/stars3.png' )
+    map:new THREE.TextureLoader().load( 'assets/stars2.png' )
     ,side:THREE.BackSide
     // ,transparent:true
     // ,alphaTest:0.1
