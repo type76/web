@@ -1,9 +1,12 @@
 <!doctype html>
 <html>
 <head>
-  <meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="utf-8"/>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0, initial-scale=1">
+
   <title>babaras | home</title>
+
 	<style type="text/css">
 	@font-face {
 		font-family: 'din';
@@ -18,17 +21,17 @@
 	body {width: 100%; height: 100%; font-family: 'din'; font-size: 30px; color: #fff;}
 	html {background-color: #333; color: #fff;}
 	a {text-decoration: none; color: red;}
-	#content {padding: 35px; color: rgba(255,255,255,0.99);}
-	#content:after {display: block; content: ''; 
-	width: 180px; height: 8px; background: green; 
-	position: relative; top: 50px;}
-	#content img {padding: 12px; background: #fff; }
+	/*#content:after {display: block; content: ''; width: 180px; height: 8px; background: green; position: relative; top: 50px;}*/
+	#content img {padding: 12px; background: #fff; display: block;}
 	#content img:hover {background: #fff000;}
 	#content img { transition: all 0.3s ease-in-out;}
+	#content iframe {margin-bottom: 1em;}
 	#nav {padding: 25px;}
 	#nav a {padding: 0 15px; color: rgba(255,255,255,0.5);
 	position: relative; z-index: 99;}
-	#nav a:hover, #nav a:active, #nav a:focus {color: #ffff00;}	
+	#nav a:hover, #nav a:active, #nav a:focus,
+	#content a:hover {color: #ffff00;}	
+	#content p {margin-bottom: 1em; max-width: 80%;}
 	.logo {display: block; margin: 0; padding: 0;}
 	.logo svg { transform: scale(0.7) translateX(-70px) translateY(40px); }
 	.logo svg path {fill: rgba(255,0,0,0.8);}
@@ -43,11 +46,15 @@
 		z-index: 9999;
 		pointer-events: none;
 		user-select: none;
-	}	
+	}
 	li, ul, ol {list-style-type: none;}
-	</style>
+	.home #content p a {padding-right: 1em; }
+	.media #content {}
+	.logo, #nav, #content {max-width: 800px; margin: 0 auto;}
+	#content {padding: 35px; color: rgba(255,255,255,0.99);}
+</style>
 </head>
-<body>
+<body class="home">
 <div class="logo">
 <svg xmlns="http://www.w3.org/2000/svg" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" preserveAspectRatio="none" x="0px" y="0px" width="500px" height="100px" viewBox="0 0 500 100">
 <defs>
@@ -107,56 +114,56 @@ L 459.3 43.2 Z"/>
     <a href="#!about" id="about">about</a>
     <a href="#!media" id="media">media</a>
     <a href="#!shop" id="shop">shop</a>
-    <a href="#!blog" id="shop">blog</a>
+    <a href="#!blog" id="blog">blog</a>
   </nav>
 
   <div id="content"></div>
 
     <script src="js/marked.js"></script>
-<!--     <script src="js/noise.js"></script> -->
 
   <script>
-// run marked.js
-async function run(here) {
-  let file = await fetch('content/'+here+".md")
-  let text = await file.text()
-  document.getElementById('content').innerHTML = marked(text);
-}
+	// run marked.js
+	async function run(here) {
+	  let file = await fetch('content/'+here+".md")
+	  let text = await file.text()
+	  document.getElementById('content').innerHTML = marked(text);
+	  document.body.classList = here;
+	}
 
-// nav click event
-document.getElementById("nav").addEventListener("click",function(e) { 
-    if(e.target && e.target.nodeName == "A") {
-	const docs = e.target.id;
-	thispage = docs;
-	run(docs)
-	history.replaceState(undefined, undefined, "#!"+hash)
-	document.body.id = e.target.id;
-	document.title = 'babaras | '+e.target.id;
-    }
-});
+	// nav click event
+	document.getElementById("nav").addEventListener("click",function(e) { 
+	    if(e.target && e.target.nodeName == "A") {
+	        const docs = e.target.id;
+	        thispage = docs;
+	        run(docs)
+			history.replaceState(undefined, undefined, "#!"+hash)
+			// document.body.id = e.target.id;
+			document.title = 'babaras | '+e.target.id;
+	    }
+	});
 
 
-// blog nav click event
-document.getElementById("content").addEventListener("click",function(e) { 
-    if(e.target && e.target.nodeName == "A") {
-	e.preventDefault();
-	var vvx = e.target.parentNode.id.slice(1, -1)
-	run('blog/'+vvx);
-	history.replaceState(undefined, undefined, "#!blog/"+vvx)
-	document.title = 'babaras | '+e.target.textContent;
-    }
-});
+	// blog nav click event
+	document.getElementById("content").addEventListener("click",function(e) { 
+	    if(e.target && e.target.nodeName == "A") {
+			e.preventDefault();
+			var vvx = e.target.parentNode.id.slice(1, -1)
+			run('blog/'+vvx);
+			history.replaceState(undefined, undefined, "#!blog/"+vvx)
+			document.title = 'babaras | '+e.target.textContent;
+	    }
+	});
 
-// start <<<<<<<<<<<
-// load page from URL
-if(window.location.hash) {
-	var hash = window.location.hash.substring(2);
-	run(hash);
-	history.replaceState(undefined, undefined, "#!"+hash)
-	document.title = 'babaras | '+hash;		
-} else {
-	run('home');
-}
+	// start <<<<<<<<<<<
+	// load page from URL
+	if(window.location.hash) {
+		var hash = window.location.hash.substring(2);
+		run(hash);
+		history.replaceState(undefined, undefined, "#!"+hash)
+		document.title = 'babaras | '+hash;	
+	} else {
+		run('home');
+	}
   </script>
 
 </body>
