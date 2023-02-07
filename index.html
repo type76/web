@@ -13,18 +13,14 @@
 		src: url('font/din-condensed-bold-webfont.woff') format('woff'),
 		url('font/din-condensed-bold.ttf') format('truetype');
 	} 
-	::-webkit-scrollbar { width: 10px; height: 10px;}
-	::-webkit-scrollbar-thumb { background: rgba(90, 90, 90, 0.8);}
-	::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.2);}
 	* {margin: 0; padding: 0; }
 	html, body {scroll-behavior: smooth; user-select:none;}
-	body {width: 100%; height: 100%; min-height:100vh; font-family: 'din'; font-size: 30px; color: #fff;}
+	body {width: 100%; height: 100%; min-height:100vh;  font-family: 'din'; font-size: 30px; color: #fff;}
 	html {background-color: #333; color: #fff;}
 	a {text-decoration: none; color: red;}
-	/*#content:after {display: block; content: ''; width: 180px; height: 8px; background: green; position: relative; top: 50px;}*/
-	#content img {padding: 12px; background: #fff; display: block;}
+	#content img {padding: 12px; background: #fff !important; display: block;}
 	#content img:hover {background: #fff000;}
-	#content img { transition: all 0.3s ease-in-out;}
+	body, #content img { transition: all 0.3s ease-in-out;}
 	#content iframe {margin-bottom: 1em;}
 	#nav {padding: 25px;}
 	#nav a {padding: 0 15px; color: rgba(255,255,255,0.5);
@@ -49,16 +45,17 @@
 	}
 	li, ul, ol {list-style-type: none;}
 	.home #content p a {padding-right: 1em; }
-	.media #content {}
+	.media #content img, .media #content iframe {max-width: 100%;}
 	.logo, #nav, #content {max-width: 800px; margin: 0 auto;}
 	#content {padding: 35px; color: rgba(255,255,255,0.99);}
-	.home {background: #830013 url(img/cover.png) bottom right no-repeat;
-		background-size: contain;}
+	.home {background: #830013 url(img/cover.png) bottom right no-repeat; background-size: contain; background-attachment: fixed; }
+	/*.about {background: #2baa6a url(img/cover2.png) bottom right no-repeat; background-size: contain;}*/
 	.about {background: #2baa6a;}
 	.media {background: #ecd432;}
 	.media iframe {border: yellow 4px solid;}
-	body.home #content { padding: 0 1em; position: absolute; bottom: 0;
-		width: 100%;}
+	/*body.home #content { padding: 0 1em; position: absolute; bottom: 0;*/
+		/*width: 100%;}*/
+	body.home {transition:none;}
 	body.about div.logo svg g path {fill: green; }
 	body.media div.logo svg g path {fill: yellow; }
 </style>
