@@ -12,3 +12,5 @@ Next up it was time for loving and nurturing, specifically raising family and te
 
 Perhaps sensing the coming Reggae renaissance, In late 2010 after a chance meeting with Jimmy Page an instant bond was formed. Through Jimmy came guitarist Russell Raisey and upon finding a classy new drummer in Sam Ferrara and Tony (from the first majestic line up)only a phone call away the latest incarnation of THE MAJESTIC was born. as well as forging ahead with whatever MCing opportunities presented themselves.on sounds or in the studio,Baba Ras tours as part of The Majestic,  Spreading positivity, love and unity with some conscious punchy styles uplifting the people and always sees them in demand,at live venues,and festivals. 
 Ruff ‘N’ Tuff, no lyrical bluff. No riddim can escape the lashing lyrics of Baba Ras.
+
+<p style="font-size:200px">&#129409;</p>
