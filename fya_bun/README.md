@@ -1,2 +1,1 @@
-https://github.com/babaras/
-https://babaras.co.uk/
+https://babaras.co.uk/fya_bun
