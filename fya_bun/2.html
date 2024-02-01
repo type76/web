@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name=viewport content='width=500'>
+  
+  <title>FYA BUN</title>
+  <style>
+    @font-face {
+      font-family: 'indigo';
+      font-weight: bold;
+      src: url("font/indigo.otf") format("opentype");
+    }
+    body{margin: 0;padding: 0; 
+      background: #000;
+      user-select:none; color: #fff; 
+      font-family: monospace;
+    }
+    canvas{display: block;}
+    #canvas{position: absolute; z-index: 9; background: red;
+    transform: scale(0.5); top: -110px; left: -110px;
+    display: none;}
+    audio {display: none;}      
+    #threecnv{position: absolute; top: 0; left: 0;}
+    #cnt {display: block; position: relative; z-index: 99;}
+    .playing #hud button#playBtn,
+    .paused #hud button#pauseBtn {
+      display: none;
+    }
+    #hud button:hover {
+      opacity: 1;
+    }
+
+    #hud {
+      display: block;
+      margin: 0;
+      padding: 12px;
+      position: absolute;
+      z-index: 2;
+      bottom: 0;
+      left: 0;
+      z-index: 99;
+      width: 100%;
+      text-align: right;
+    }
+    #hud button {
+      background: transparent;
+      color: #fff; border:none; outline: none;
+      cursor: pointer; display: block;
+      width: 50px; height: 50px;
+      opacity: 0.1;
+      transition: all 0.3s ease-in-out;
+      z-index: 2; position: relative;
+      margin: 0 auto;
+    }
+    .start #hud button, #hud button.on {
+      opacity: 1 !important;
+    }
+    .start #hud button:before {
+      content: 'play ';
+      position: absolute;
+      left:-58px;
+      top: 12px;
+      font-family: 'indigo';
+      font-size: 20px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      opacity: 0.3;
+    }
+    .start #title {
+      display: block;
+      position: fixed;
+      top: 50%;
+      left: 40%;
+      z-index: 99;
+      font-family: 'indigo';
+      font-size: 80px;
+      color: red;
+      letter-spacing: 2px;
+      text-transform: uppercase;        
+      width: 200px;
+      /*background: #000;*/
+      text-align: left;
+      height: 2em;
+      line-height: 1em;
+      margin: 0 auto;
+      text-shadow: 0 0 9px rgba(255,0,0,1);
+      opacity: 0.5;
+      cursor: pointer;
+      transition: all 0.2s ease-in-out;
+    }
+    .start #title:hover {opacity: 0.8;}
+     #title {display: none;}
+    </style>
+  </head>
+  <body class="paused start">
+    
+    <div id="hud">
+      <h2 id="title" onclick="playme()">FYA BUN</h2>
+      <button id="playBtn" type="button" onclick="playme()">
+        <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" preserveAspectRatio="none" viewBox="0 0 100 100">
+          <defs>
+            <path id="a" fill="#fff" d="M19.55 14.85v70.3L80.5 50 19.55 14.85Z"/></path>        </defs>
+            <use xlink:href="#a"/>
+          </svg>
+        </button>
+
+        <button id="pauseBtn" type="button" onclick="pauseme()" >
+          <svg xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none" viewBox="0 0 100 100">
+            <path fill="#fff" d="M39.4778 17.0371H21.0593v66h18.4185zm34.5349 0H55.594v66h18.4186z"/></path>
+          </svg>
+        </button>
+
+        <span id="time"></span>
+      </div>
+
+      <div id="cnt" >
+        <audio id="audioPlayer" src="assets/FYA_BUN.mp3" controls></audio>
+      </div>
+
+      <canvas id="canvas"></canvas>
+      <div class="font_preload">
+        <span style="font-family: 'indigo';"></span>
+      </div>
+
+      <script src="js/three.min.js"></script>
+      <script src="js/VolumetricFire.js"></script>
+
+      <script>
+  let playBtn = document.getElementById('playBtn');
+  let pauseBtn = document.getElementById('pauseBtn');
+  let mouseX = 0;
+  let windowHalfX = window.innerWidth / 2;
+
+
+  // player
+  player = {
+    width:64,
+    size:8,
+    count:4,
+    fps:8,
+  };
+
+  var subs = [
+  {"start":0.03 , "text":"Fya bun" },
+  {"start":0.10 , "text":"Bun" },
+  {"start":0.17 , "text":"Bun" },
+  {"start":0.23 , "text":"Bun" },
+  {"start":0.30 , "text":"Fya fya" },
+  {"start":0.31 , "text":"Bun babylon and mek dem retire" },
+  {"start":0.35 , "text":"Beat ketteh drum and chant fya fya" },
+  {"start":0.38 , "text":"Unda dem skin" },
+  {"start":0.40 , "text":"Mek de fya get hotter" },
+  {"start":0.42 , "text":"Bun dem to asha" },
+  {"start":0.44 , "text":"Fya burning" },
+  {"start":0.46 , "text":"Babylon system blazin" },
+  {"start":0.49 , "text":"The walls of babylon falling" },
+  {"start":0.53 , "text":"Babylon system a bun" },
+  {"start":0.55 , "text":"Dem end times a come" },
+  {"start":0.58 , "text":"Fya bun" },
+  {"start":0.65 , "text":"Bun" },
+  {"start":0.72 , "text":"Bun" },
+  {"start":0.78 , "text":"Bun" },
+  {"start":0.86  , "text":"Revelations revealing" },
+  {"start":0.89 , "text":"Mi eyes open up through researching" },
+  {"start":0.93 , "text":"With the ancestors connecting" },
+  {"start":0.96 , "text":"Binghi drums dem beatin" },
+  {"start":1.00 , "text":"Ancestors dem rising" },
+  {"start":1.03 , "text":"With the ancient we communicatin" },
+  {"start":1.07 , "text":"A so de fya keep blazin" },
+  {"start":1.09 , "text":"Babylon have fe run down" },
+  {"start":1.13 , "text":"Fya bun" },
+  {"start":1.20 , "text":"Bun" },
+  {"start":1.26 , "text":"Bun" },
+  {"start":1.33 , "text":"Bun" },
+  {"start":1.40 , "text":"Fya fya" },
+  {"start":1.41 , "text":"Bun babylon and mek dem retire" },
+  {"start":1.44 , "text":"Beat ketteh drum and chant fya fya" },
+  {"start":1.48 , "text":"Unda dem skin" },
+  {"start":1.50 , "text":"Mek de fya get hotter" },
+  {"start":1.51 , "text":"Burn dem to asha" },
+  {"start":1.54 , "text":"Fya burnin" },
+  {"start":1.56 , "text":"Babylon system blazin" },
+  {"start":1.59 , "text":"The walls of babylon falling" },
+  {"start":1.62 , "text":"Babylon system a bun" },
+  {"start":1.65 , "text":"Dem end times a come" },
+  {"start":1.68 , "text":"Fya bun" },
+  {"start":1.73 , "text":"Fya bun" },
+  {"start":1.81 , "text":"Fya bun" },
+  {"start":1.88 , "text":"*" },
+  ];
+
+
+  // play/pause
+  function playme() {
+    if (document.body.classList == 'playing') {return}
+    playing = true;
+    audioPlayer.play();
+    document.body.classList = 'playing';
+    opacitylerp = 1;
+    pauseBtn.classList = 'on';
+    setTimeout(function () {pauseBtn.classList = '';}, 50)
+  }
+
+  function pauseme() {
+    playing = false;
+    document.body.classList = 'paused'; 
+    audioPlayer.pause();
+    opacitylerp = 0;
+    playBtn.classList = 'on';
+    setTimeout(function () {playBtn.classList = '';}, 50)
+  }
+
+  // vars
+  var seconds = 0;
+  var ths = 0;
+  var elapsed = 0;
+  var thisscene = 0;
+  var txtsize = 0;
+  var lerp = 0;
+  var opacitylerp = 0;
+  var playing = false;
+
+
+  // canvas
+  let canvas = document.getElementById('canvas');
+  let ctx = canvas.getContext('2d');
+
+  canvas.width = 512 ;
+  canvas.height = 512;
+
+  var width = window.innerWidth;
+  var height = window.innerHeight;
+
+  // three.js
+  var scene = new THREE.Scene();
+  var renderer = new THREE.WebGLRenderer();
+  renderer.setSize( width, height );
+  renderer.domElement.id = 'threecnv'
+  document.body.appendChild( renderer.domElement );
+
+  // camera
+  var camera = new THREE.PerspectiveCamera( 70, width / height, .1, 1000 );
+  camera.position.set( 0, 3.3, 3.3 );
+  camera.lookAt(0,0,0)
+
+
+  // text plane group
+  var group = new THREE.Group();
+  scene.add(group);
+
+  // text plane
+  const geometry = new THREE.PlaneGeometry( 10, 10);
+  const material = new THREE.MeshBasicMaterial( { 
+      // color:0xff0000,
+      map : new THREE.CanvasTexture(canvas),
+  } );
+  plane = new THREE.Mesh( geometry, material );
+  plane.position.y = -5;
+  plane.position.z = -5.5;
+  plane.lookAt(camera.position)
+  plane.material.depthWrite = false;
+  plane.material.map.magFilter = THREE.NearestFilter;
+  plane.material.map.minFilter = THREE.NearestFilter;
+  group.add( plane );
+
+  // fire
+  VolumetricFire.texturePath = 'assets/';
+  var fireWidth  = 4;
+  var fireHeight = 4;
+  var fireDepth  = 4;
+  var sliceSpacing = 0.8;
+
+  var fire = new VolumetricFire(
+    fireWidth,
+    fireHeight,
+    fireDepth,
+    sliceSpacing,
+    camera
+    );
+  scene.add( fire.mesh );
+  fire.mesh.position.set( 0, 0.5, 0 );
+
+  // sphere
+  const sgeometry = new THREE.SphereGeometry( 0.8, 32, 32 );
+  const smaterial = new THREE.MeshBasicMaterial( { color: 0x000000 } );
+  const sphere = new THREE.Mesh( sgeometry, smaterial );
+  sphere.position.y=-1;
+  scene.add( sphere );
+
+
+
+        const bgeometry = new THREE.BufferGeometry();
+        const vertices = [];
+        const materials = [];
+
+        const textureLoader = new THREE.TextureLoader();
+
+        const sprite1 = textureLoader.load( 'assets/disc.png' );
+
+        for ( let i = 0; i < 10000; i ++ ) {
+
+          const x = Math.random() * 200 - 100;
+          const y = Math.random() * 200 - 100;
+          const z = Math.random() * 200 - 100;
+
+          vertices.push( x, y, z );
+
+        }
+
+        parameters = [
+          [[ 1.0, 0.02, 0.5 ], sprite1, 0.15 ],
+          [[ 0.95, 0.01, 0.5 ], sprite1, 0.15 ],
+          [[ 0.90, 0.005, 0.5 ], sprite1, 0.15 ],
+          [[ 0.85, 0.01, 0.5 ], sprite1, 0.15 ],
+          [[ 0.80, 0.01, 0.5 ], sprite1, 0.15 ]
+        ];
+
+        for ( let i = 0; i < parameters.length; i ++ ) {
+
+          const sprite = parameters[ i ][ 1 ];
+          const size = parameters[ i ][ 2 ];
+
+          materials[ i ] = new THREE.PointsMaterial( { 
+            size: size*1.2, 
+            map: sprite, 
+            blending: THREE.AdditiveBlending, 
+            depthTest: true, 
+            transparent: true, 
+            opacity:0.3 
+          } );
+          const particles = new THREE.Points( geometry, materials[ i ] );
+
+          particles.rotation.x = Math.random() * 6;
+          particles.rotation.y = Math.random() * 6;
+          particles.rotation.z = Math.random() * 6;
+
+          scene.add( particles );
+
+        }
+
+  // wrap text to canvas size
+  const wrapText = function(ctx, text, x, y, maxWidth, lineHeight) {
+
+    let words = text.split(' ');
+    let line = '';
+    let testLine = '';
+    let lineArray = [];
+
+
+    for(var n = 0; n < words.length; n++) {
+      testLine += `${words[n]} `;
+      let metrics = ctx.measureText(testLine);
+      let testWidth = metrics.width;
+      if (testWidth > maxWidth && n > 0) {
+        lineArray.push([line, x, y]);
+        y += lineHeight;
+        line = `${words[n]} `;
+        testLine = `${words[n]} `;
+      }
+      else {
+        line += `${words[n]} `;
+      }
+      if(n === words.length - 1) {
+        lineArray.push([line, x, y]);
+      }
+    }
+
+    return lineArray;
+  }
+
+
+// render text
+function create2Dtext(thetext){
+  ctx.clearRect(0, 0, 512, 512);
+
+  // make short words BIGGER
+  if (thetext.length<8) {
+    txtsize=10*Math.round(Math.random()+2);
+  }
+  // if (thetext.length<4) {txtsize=15*Math.round(Math.random()+4);}
+  if (thetext.length>8) {txtsize=1;}
+
+  ctx.font = '300 '+(36+txtsize)+'px indigo';
+  ctx.letterSpacing = "4px";
+  ctx.fillStyle = 'red';
+  // thetext = thetext.toUpperCase();
+  let wrappedText = wrapText(ctx, thetext, 30, 80, 480, 38);
+
+  wrappedText.forEach(function(item) {
+    ctx.fillText(item[0], item[1], item[2]); 
+  })
+
+  plane.material.map.needsUpdate = true;
+
+}
+
+// make text from array value at this timeslot
+var xswitch = false;
+
+var rendertxt = (function(a, b, c) {
+  return function( a, b, c) {
+    if (!xswitch) {
+      xswitch = true;
+        // text
+        create2Dtext(a, b, c)
+        text = '';
+        plane.material.map.needsUpdate = true;
+        lerp = Math.random()-0.5;
+        return
+      }
+    };
+  })();
+
+  
+  // spacebar
+  document.body.onkeyup = function(e){
+    if(e.keyCode == 32){
+      if (playing) {
+        pauseme()
+      } else {
+        playme()
+      }
+    }
+  }
+
+
+  // loop
+  function animate () {
+    elapsed += 0.005;
+    fire.update( elapsed );    
+    //
+    camera.position.x += ( mouseX - camera.position.x ) * 0.05;
+    //
+    fire.mesh.rotation.y += (camera.position.x/15)+0.01;
+    // subs
+    subs.forEach(function(element, index){
+      if( ths == element.start){
+        text = element.text;
+        
+        // if asterix
+        if (element.text.charAt(0) === '*') { 
+          lerp = 0;
+          text = '';
+        }
+
+        rendertxt(text, element.cap, element.font);
+        if (index != thisscene) {
+          xswitch = false;
+        }
+        thisscene = index;
+      }   
+    });// subs
+
+    // audio playing
+    if (playing) {    
+      ths = (audioPlayer.currentTime/100).toFixed(2);
+      // rotate text
+      plane.rotation.y += (lerp - plane.rotation.y)*0.2;
+    }
+    // particles
+    for ( let i = 0; i < scene.children.length; i ++ ) {
+      const object = scene.children[ i ];
+      if ( object instanceof THREE.Points ) {
+        object.rotation.y = (elapsed/5) * ( i < 4 ? i + 1 : - ( i + 1 ) )+(camera.position.x/5);
+      }
+    }
+
+    // render
+    renderer.render( scene, camera );
+    requestAnimationFrame( animate );
+  } // end animate
+
+
+
+  // event
+  window.addEventListener( 'resize', onWindowResize, false );
+  function onWindowResize() {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize( window.innerWidth, window.innerHeight );
+  }
+
+  // move pointer
+  document.body.addEventListener( 'pointermove', onPointerMove );
+  function onPointerMove( event ) {
+
+    if ( event.isPrimary === false ) return;
+      mouseX = -(event.clientX - windowHalfX)/400;
+      // limit x pos
+      if (mouseX<-0.4) {mouseX = -0.4;}   
+      if (mouseX>0.4) {mouseX = 0.4;}
+      
+    }
+
+// orientation
+let portrait = window.matchMedia("(orientation: portrait)");
+
+portrait.addEventListener("change", function(e) {
+    if(e.matches) {
+        camera = new THREE.PerspectiveCamera( 60, width / height, .1, 1000 );
+    } else {
+        camera = new THREE.PerspectiveCamera( 70, width / height, .1, 1000 );
+    }
+})
+
+  // start
+  animate();
+
+</script>
+</body>
+</html>
