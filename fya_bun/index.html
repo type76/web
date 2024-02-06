@@ -43,6 +43,7 @@
       z-index: 99;
       width: 100%;
       text-align: right;
+      /*visibility: hidden;*/
     }
     #hud button {
       background: transparent;
@@ -89,13 +90,21 @@
       opacity: 0.5;
       cursor: pointer;
       transition: all 0.2s ease-in-out;
+      /*display: none;*/
     }
     .start #title:hover {opacity: 0.8;}
      #title {display: none;}
+     #record {position: absolute; z-index: 99; 
+      top: 0; left: 0;}
+
     </style>
   </head>
   <body class="paused start">
     
+    <div id="record">
+      
+    </div>
+
     <div id="hud">
       <h2 id="title" onclick="playme()">FYA BUN</h2>
       <button id="playBtn" type="button" onclick="playme()">
@@ -126,74 +135,70 @@
 
       <script src="js/three.min.js"></script>
       <script src="js/VolumetricFire.js"></script>
+      <!-- <script src="js/CCapture.all.min.js"></script> -->
+      <!-- <script src="js/WebMWriter.js"></script> -->
 
       <script>
+  var capturer;
   let playBtn = document.getElementById('playBtn');
   let pauseBtn = document.getElementById('pauseBtn');
   let mouseX = 0;
   let windowHalfX = window.innerWidth / 2;
 
-
-  // player
-  player = {
-    width:64,
-    size:8,
-    count:4,
-    fps:8,
-  };
-
   var subs = [
-  {"start":0.03 , "text":"fya bun" },
-  {"start":0.10 , "text":"bun" },
-  {"start":0.17 , "text":"bun" },
-  {"start":0.23 , "text":"bun" },
-  {"start":0.30 , "text":"fya fya" },
-  {"start":0.31 , "text":"bun babylon and mek dem retire" },
-  {"start":0.35 , "text":"beat ketteh drum and chant fya fya" },
-  {"start":0.38 , "text":"unda dem skin" },
-  {"start":0.40 , "text":"mek de fya get hotter" },
-  {"start":0.42 , "text":"bun dem to asha" },
-  {"start":0.44 , "text":"fya burning" },
-  {"start":0.46 , "text":"babylon system blazin" },
-  {"start":0.49 , "text":"the walls of babylon falling" },
-  {"start":0.53 , "text":"babylon system a bun" },
-  {"start":0.55 , "text":"dem end times a come" },
-  {"start":0.58 , "text":"fya bun" },
-  {"start":0.65 , "text":"bun" },
-  {"start":0.72 , "text":"bun" },
-  {"start":0.78 , "text":"bun" },
-  {"start":0.86  , "text":"revelations revealing" },
-  {"start":0.89 , "text":"mi eyes open up through researching" },
-  {"start":0.93 , "text":"with the ancestors connecting" },
-  {"start":0.96 , "text":"binghi drums dem beatin" },
-  {"start":1.00 , "text":"ancestors dem rising" },
-  {"start":1.03 , "text":"with the ancient we communicatin" },
-  {"start":1.07 , "text":"a so de fya keep blazin" },
-  {"start":1.09 , "text":"babylon have fe run down" },
-  {"start":1.13 , "text":"fya bun" },
-  {"start":1.20 , "text":"bun" },
-  {"start":1.26 , "text":"bun" },
-  {"start":1.33 , "text":"bun" },
-  {"start":1.40 , "text":"fya fya" },
-  {"start":1.41 , "text":"bun babylon and mek dem retire" },
-  {"start":1.44 , "text":"beat ketteh drum and chant fya fya" },
-  {"start":1.48 , "text":"unda dem skin" },
-  {"start":1.50 , "text":"mek de fya get hotter" },
-  {"start":1.51 , "text":"burn dem to asha" },
-  {"start":1.54 , "text":"fya burnin" },
-  {"start":1.56 , "text":"babylon system blazin" },
-  {"start":1.59 , "text":"the walls of babylon falling" },
-  {"start":1.62 , "text":"babylon system a bun" },
-  {"start":1.65 , "text":"dem end times a come" },
-  {"start":1.68 , "text":"fya bun" },
-  {"start":1.73 , "text":"fya bun" },
-  {"start":1.81 , "text":"fya bun" },
+  {"start":0.03 , "text":"Fya bun" },
+  {"start":0.10 , "text":"Bun" },
+  {"start":0.17 , "text":"Bun" },
+  {"start":0.23 , "text":"Bun" },
+  {"start":0.30 , "text":"Fya fya" },
+  {"start":0.31 , "text":"Bun babylon and mek dem retire" },
+  {"start":0.35 , "text":"Beat ketteh drum and chant fya fya" },
+  {"start":0.38 , "text":"Unda dem skin" },
+  {"start":0.40 , "text":"Mek de fya get hotter" },
+  {"start":0.42 , "text":"Bun dem to asha" },
+  {"start":0.44 , "text":"Fya burning" },
+  {"start":0.46 , "text":"Babylon system blazin" },
+  {"start":0.49 , "text":"The walls of babylon falling" },
+  {"start":0.53 , "text":"Babylon system a bun" },
+  {"start":0.55 , "text":"Dem end times a come" },
+  {"start":0.58 , "text":"Fya bun" },
+  {"start":0.65 , "text":"Bun" },
+  {"start":0.72 , "text":"Bun" },
+  {"start":0.78 , "text":"Bun" },
+  {"start":0.86  , "text":"Revelations revealing" },
+  {"start":0.89 , "text":"Mi eyes open up through researching" },
+  {"start":0.93 , "text":"With the ancestors connecting" },
+  {"start":0.96 , "text":"Binghi drums dem beatin" },
+  {"start":1.00 , "text":"Ancestors dem rising" },
+  {"start":1.03 , "text":"With the ancient we communicatin" },
+  {"start":1.07 , "text":"A so de fya keep blazin" },
+  {"start":1.09 , "text":"Babylon have fe run down" },
+  {"start":1.13 , "text":"Fya bun" },
+  {"start":1.20 , "text":"Bun" },
+  {"start":1.26 , "text":"Bun" },
+  {"start":1.33 , "text":"Bun" },
+  {"start":1.40 , "text":"Fya fya" },
+  {"start":1.41 , "text":"Bun babylon and mek dem retire" },
+  {"start":1.44 , "text":"Beat ketteh drum and chant fya fya" },
+  {"start":1.48 , "text":"Unda dem skin" },
+  {"start":1.50 , "text":"Mek de fya get hotter" },
+  {"start":1.51 , "text":"Burn dem to asha" },
+  {"start":1.54 , "text":"Fya burnin" },
+  {"start":1.56 , "text":"Babylon system blazin" },
+  {"start":1.59 , "text":"The walls of babylon falling" },
+  {"start":1.62 , "text":"Babylon system a bun" },
+  {"start":1.65 , "text":"Dem end times a come" },
+  {"start":1.68 , "text":"Fya bun" },
+  {"start":1.73 , "text":"Fya bun" },
+  {"start":1.81 , "text":"Fya bun" },
   {"start":1.88 , "text":"*" },
   ];
 
 
   // play/pause
   function playme() {
+    // capturer.start();
+
     if (document.body.classList == 'playing') {return}
     playing = true;
     audioPlayer.play();
@@ -385,7 +390,7 @@ function create2Dtext(thetext){
   ctx.font = '300 '+(36+txtsize)+'px indigo';
   ctx.letterSpacing = "4px";
   ctx.fillStyle = 'red';
-  thetext = thetext.toUpperCase();
+  // thetext = thetext.toUpperCase();
   let wrappedText = wrapText(ctx, thetext, 30, 80, 480, 38);
 
   wrappedText.forEach(function(item) {
@@ -428,6 +433,8 @@ var rendertxt = (function(a, b, c) {
 
   // loop
   function animate () {
+    
+
     elapsed += 0.005;
     fire.update( elapsed );    
     //
@@ -454,7 +461,9 @@ var rendertxt = (function(a, b, c) {
     });// subs
 
     // audio playing
-    if (playing) {    
+    if (playing) {   
+
+ 
       ths = (audioPlayer.currentTime/100).toFixed(2);
       // rotate text
       plane.rotation.y += (lerp - plane.rotation.y)*0.2;
@@ -470,6 +479,11 @@ var rendertxt = (function(a, b, c) {
     // render
     renderer.render( scene, camera );
     requestAnimationFrame( animate );
+    
+    // capture
+    // capturer.capture( threecnv );
+    // if( capturer ) capturer.capture( renderer.domElement );
+
   } // end animate
 
 
@@ -504,6 +518,20 @@ portrait.addEventListener("change", function(e) {
         camera = new THREE.PerspectiveCamera( 70, width / height, .1, 1000 );
     }
 })
+
+
+// audioPlayer.onended = (event) => {
+// 	  capturer.stop();    
+//       capturer.save();
+// };
+
+
+// var capturer = new CCapture( {
+//   format: 'webm',
+//   framerate: 60,
+//   verbose: true
+// } );
+
 
   // start
   animate();
